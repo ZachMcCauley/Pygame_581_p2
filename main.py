@@ -97,6 +97,9 @@ class Game:
         self.mine_count = 15
         self.board = None
 
+        # store previous times
+        self.prev_times = []
+
         # clock variables
         self.start_ticks = 0
         self.elapsed_seconds = 0
@@ -137,6 +140,7 @@ class Game:
     
     # initialise a new game board
     def start_new_game(self):
+        self.prev_times.clear()
         # builds board with mine_count # of mines
         self.board = Board(GRID_SIZE, self.mine_count)
 
@@ -222,7 +226,7 @@ class Game:
         mines_left = self.board.mine_count - self.board.flags_placed()
         mine_text = self.font_medium.render(f"Mines: {mines_left}", True, COLOR_TEXT)
         self.screen.blit(mine_text, (10, 15))
-        time_text = self.font_medium.render(f"Time: {self.elapsed_seconds}", True, COLOR_TEXT)
+        time_text = self.font_medium.render(f"Time: {self.output_time(self.elapsed_seconds)}", True, COLOR_TEXT) #ZM changed output format
         self.screen.blit(time_text, (WINDOW_WIDTH // 2 - 50, 15))
 
         # draw pre-rendered buttons
@@ -312,11 +316,29 @@ class Game:
         text = self.font_title.render(message, True, color)
         self.screen.blit(text, text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 40)))
 
+        if self.board.won: 
+            time = self.font_medium.render("Time: " + self.output_time(self.elapsed_seconds), True, COLOR_TEXT)
+            self.screen.blit(time, time.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 5)))
         # render and draw user instructions
         hint = self.font_small.render(
             "Press R to restart or M for menu", True, COLOR_TEXT
         )
         self.screen.blit(hint, hint.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20)))
+
+        if self.board.won:
+            if not self.prev_times:
+                self.get_prev_times()
+            time_label = self.font_small.render("Best Times", True, COLOR_TITLE)
+            self.screen.blit(time_label, time_label.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 40)))
+            if len(self.prev_times) >= 2 and self.elapsed_seconds == self.prev_times[0] and self.elapsed_seconds != self.prev_times[1]:
+                record = self.font_large.render("New Record!", True, COLOR_TITLE)
+                self.screen.blit(record, record.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 70 + min(5, len(self.prev_times)) * 10)))
+            for i in range(5):
+                if i >= len(self.prev_times): break
+                time_label = self.font_small.render(str(i + 1), True, COLOR_TEXT)
+                self.screen.blit(time_label, time_label.get_rect(midleft=(WINDOW_WIDTH // 2 - 40, WINDOW_HEIGHT // 2 + 50 + i * 10)))
+                time = self.font_small.render(self.output_time(self.prev_times[i]), True, COLOR_TEXT)
+                self.screen.blit(time, time.get_rect(midright=(WINDOW_WIDTH // 2 + 40, WINDOW_HEIGHT // 2 + 50 + i * 10)))
 
     
     # -- main loop ----------------------------------------------------------
@@ -404,8 +426,41 @@ class Game:
                 self.board.reveal(row, col)
         elif button == 3:  # right click, flag a tile
             self.board.toggle_flag(row, col)
-    
 
+    #Zach M added functions for time/record keeping and outputting
+    #reformats seconds as int to time as string
+    def output_time(self, time):
+        min = time // 60
+        sec = str(time - min * 60)
+        if len(sec) == 1: sec = "0" + sec
+        if min == 0:
+            return sec + "s"
+        else:
+            return str(min) + "m " + sec + "s"
+
+    #writes current time to file, then finds the five quickest times for the leaderboard
+    def get_prev_times(self):
+        try:
+            t_file = open("times.txt", "a")
+            t_file.write(str(self.mine_count) + " " + str(self.elapsed_seconds) + "\n") 
+            t_file.close()
+            with open("times.txt") as t:
+                for line in t:
+                    values = line.split()
+                    for i in range(5):
+                        if values[0] != str(self.mine_count):
+                            break
+                        if i == len(self.prev_times):
+                            self.prev_times.append(int(values[1]))
+                            break
+                        if int(values[1]) < self.prev_times[i]:
+                            self.prev_times.insert(i, int(values[1]))
+                            break
+                    while len(self.prev_times) > 5:
+                        self.prev_times.pop(5)
+        except:
+            with open("times.txt", "w") as file: #assumes file has corrupted data, wipes file
+                pass
 
 # run the game
 def main():
