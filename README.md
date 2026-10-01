@@ -26,9 +26,9 @@ A more extensive explanation of the code can be found in the Architecture Docume
 ---
 ## Installation
 This program requires pygame to be installed. Note that pygame is not compatible with 3.14.x or any release past that. Pygame can be installed regularly, or through a virtual environment as shown below:
-1. Clone the repository
-2. Once you are in the directory, create a virtual environment using `py -3.13 -m venv .venv`
-3. Activate the virtual environment using `.\.venv\Scripts\Activate.ps1`
+1. Clone the repository using the terminal: `git clone insertRepoLink`
+2. Once you are in the directory, create a virtual environment using `py -3.13 -m venv .venv` for windows or for linux `python3 -m venv .venv`
+3. Activate the virtual environment using `.\.venv\Scripts\Activate.ps1` for windows or for linux `source .venv/bin/activate`
 4. Now your terminal begins with something akin to `(.venv) PS C:\Users\YourName\pygame-game>` and `python --version` is 3.13.x
 5. Install the dependencies through `python -m pip install -r requirements.txt` or `python -m pip install pygame`
 6. Run the program with `Python main.py`
