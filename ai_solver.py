@@ -11,6 +11,7 @@ like the reveal/toggle flag, using row/col cords actions
 Author: Jett Viduya
 """
 
+from minebrute import Minebrute
 import random
 
 #this function returns every valid row/col touching a cell, this mirrors the Board._neighbors() function
@@ -98,7 +99,29 @@ def ai_medium_move(board):
     #if we get here, no rules could be applied, so fall back to a random move
     return ai_easy_move(board) is not None
 
+# Hard difficulty AI: This scans tiles and finds all locations which are definitely safe or definitely have a mine.
+# Returns True if a move was made (i.e. a tile is revealed), and False if no move was made.
+# If no new information is present on the board, a random tile is clicked.
 
-
-
-            
+def ai_hard_move(board):
+    algo = Minebrute(board)
+    confirmedSafe = set()
+    confirmedMines = set()
+    for r in range(board.size):
+        for c in range(board.size):
+            safe, mines = algo.minebrute((r, c), maxCombinations=100)
+            confirmedMines = confirmedMines.union(mines)
+            confirmedSafe = confirmedSafe.union(safe)
+    # Temporary pass so I can have a breakpoint here:
+    pass
+    # Mark all flagged locations with flags
+    for mine in confirmedMines:
+        board.flagged[mine[0]][mine[1]] = True
+    # Click all confirmed safe tiles
+    if len(confirmedSafe) > 0:
+        for safe in confirmedSafe:
+            board.reveal(safe[0], safe[1])
+        return True
+    else:
+        # Default to easy AI behavior
+        return ai_easy_move(board) is not None

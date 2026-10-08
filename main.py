@@ -14,6 +14,7 @@ import sys
 import pygame
 from board import Board
 from button import Button
+from ai_solver import ai_hard_move
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -133,6 +134,7 @@ class Game:
 
     # Game Buttons
     def _build_game_buttons(self):
+        self.solve_button = Button((WINDOW_WIDTH - 220, 10, 65, 40), "Solve", self.font_medium)
         self.restart_button = Button((WINDOW_WIDTH - 145, 10, 65, 40), "Reset", self.font_medium)
         self.menu_button = Button((WINDOW_WIDTH - 70, 10, 65, 40), "Menu", self.font_medium)
 
@@ -231,6 +233,7 @@ class Game:
 
         # draw pre-rendered buttons
         # rendered in _build_game_buttons
+        self.solve_button.draw(self.screen)
         self.restart_button.draw(self.screen)
         self.menu_button.draw(self.screen)
 
@@ -402,6 +405,8 @@ class Game:
     # handles user input while the minesweeper board is active
     def handle_game_click(self, pos, button):
         x, y = pos
+        if self.solve_button.is_clicked(pos):
+            ai_hard_move(self.board)
         if self.restart_button.is_clicked(pos):
             self.start_new_game()
             return
