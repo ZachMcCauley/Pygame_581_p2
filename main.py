@@ -140,7 +140,6 @@ class Game:
         self.restart_button = Button((WINDOW_WIDTH - 145, 10, 65, 40), "Reset", self.font_medium)
         self.menu_button = Button((WINDOW_WIDTH - 70, 10, 65, 40), "Menu", self.font_medium)
 
-        sx = WINDOW_WIDTH - 220
         self.easy_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 2, 65, 32), "Easy", self.font_small)
         self.med_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 36, 65, 32), "Med", self.font_small)
         self.hard_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 70, 65, 32), "Hard", self.font_small)
