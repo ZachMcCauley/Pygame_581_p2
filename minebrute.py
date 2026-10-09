@@ -42,10 +42,8 @@ class Minebrute:
         elif maxCombinations < 0:
             raise ValueError("maxCombinations cannot be negative!")
         # Case : Tile at position is not revealed
-        # Another edge case : tile is a revealed mine
-        tile_not_revealed = not self.board.revealed[position[0]][position[1]]
-        checking_mine = position in self.board.mines
-        if tile_not_revealed or checking_mine:
+        # Also case : tile is a "revealed 0"
+        if not self.board.revealed[position[0]][position[1]] or self.board.counts[position[0]][position[1]] == 0:
             # In this case, we conclude nothing.
             return set(), set()
         # Get a list of positions for mines to check in a 3x3 area
@@ -70,16 +68,6 @@ class Minebrute:
                 safePositions.add((r, c))
         # Calculate how many combinations without replacement the mines can have in the 3x3 area.
         adjMines = self.board.counts[position[0]][position[1]]
-        # Subtract the number of revealed adjacent mines.
-        for neighbor in self.board._neighbors(position[0], position[1]):
-            if self.board.revealed[neighbor[0]][neighbor[1]] and neighbor in self.board.mines:
-                adjMines -= 1
-        # Case : tile is a "revealed 0" or all adjacent mine positions are known
-        if adjMines == 0:
-            # We return that all adjacent tiles are safe, and no adjacent tiles are mines.
-            return safePositions, set()
-        elif adjMines < 0:
-            raise RuntimeError(f"Adjacent mines after considering revealed mines ({adjMines}) is less than 0!")
         combinations = int(factorial(len(minePositions)) / (factorial(adjMines) * factorial(len(minePositions) - adjMines)))
         if combinations > maxCombinations:
             raise RuntimeError(f"Maximum combinations ({combinations}) of mines exceeded {maxCombinations}!")
@@ -101,7 +89,6 @@ class Minebrute:
                     except IndexError:
                         continue
                     if not validConfiguration:
-                        #print(f"Rule was broken at position {r,c} with proposed mine set {combo}")
                         break
                 if not validConfiguration:
                     break
@@ -112,9 +99,6 @@ class Minebrute:
         # Assert that there is no overlap between minePositions and safePositions
         if len(minePositions.intersection(safePositions)) > 0:
             raise RuntimeError("Somehow, a tile is confirmed to both have and not have a mine. This is scary.")
-        # Check that there are no false positive safe tiles
-        elif len(safePositions.intersection(self.board.mines)) > 0:
-            raise RuntimeError("Somehow, a mine is confirmed safe.")
         """
         While this check was made in good faith, it was removed because the cached mine locations included locations outside the scope of the area being checked.
         
@@ -139,9 +123,6 @@ class Minebrute:
         # We can't break a rule for a tile we don't know
         if not self.board.revealed[position[0]][position[1]]:
             return False
-        # We also can't break a rule for a mine, as we don't know how many adjacents are near a mine.
-        elif (position[0], position[1]) in self.board.mines:
-            return False
         expectedAdjacentMines = self.board.counts[position[0]][position[1]]
         actualMines = 0
         possibleMines = 0
@@ -154,17 +135,10 @@ class Minebrute:
                 # Mine detected - Increment added mines.
                 mineContradiction = (r, c) in notMines
                 if not mineContradiction and ((r, c) in self._knownMineLocationCache or (r, c) in mines):
-                    #print(f"Actual mine at {(r, c)}")
                     actualMines += 1
                     possibleMines += 1
                 elif not mineContradiction and not self.board.revealed[r][c]:
-                    #print(f"Possible mine at {(r, c)}")
                     possibleMines += 1
-                else:
-                    #print(f"No mine at {r, c}\tmc: {mineContradiction}")
-                    pass
-        #print(f"Results for rule break check at position {position}")
-        #print(f"{actualMines} <= {expectedAdjacentMines} <= {possibleMines}")
         return (actualMines > expectedAdjacentMines) or (possibleMines < expectedAdjacentMines)
 
     # Get the set of positions on the board which are known to contain mines for sure.
@@ -173,20 +147,13 @@ class Minebrute:
         toReturn = set()
         for r in range(self.board.size):
             for c in range(self.board.size):
-                if not self.board.revealed[r][c]:
+                if not self.board.revealed[r][c] or self.board.counts[r][c] == 0:
                     continue
-                elif (r, c) in self.board.mines:
-                    toReturn.add((r, c))
-                    continue
-                elif self.board.counts[r][c] == 0:
-                    continue
-                possibleMines = set()
+                unrevealedSpaces = set()
                 neighbors = get_neighbors(self.board, r, c)
                 for neighbor in neighbors:
-                    if not self.board.revealed[neighbor[0]][neighbor[1]] or (neighbor[0], neighbor[1]) in self.board.mines:
-                        possibleMines.add(neighbor)
-                if self.board.counts[r][c] == len(possibleMines):
-                    toReturn = toReturn.union(possibleMines)
-                elif self.board.counts[r][c] > len(possibleMines):
-                    raise RuntimeError("There are not enough tiles to hold that many mines!")
+                    if not self.board.revealed[neighbor[0]][neighbor[1]]:
+                        unrevealedSpaces.add(neighbor)
+                if self.board.counts[r][c] == len(unrevealedSpaces):
+                    toReturn = toReturn.union(unrevealedSpaces)
         return toReturn
