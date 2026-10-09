@@ -100,15 +100,19 @@ class Board:
     def chord(self, r, c):
         """Reveal neighbors of a revealed numbered cell if flag count matches."""
         if not self.revealed[r][c] or self.counts[r][c] == 0:
-            return
+            return 0
+        work_done = False
         neighbors = list(self._neighbors(r, c))
         flags = sum(1 for nr, nc in neighbors if self.flagged[nr][nc])
         if flags == self.counts[r][c]:
             for nr, nc in neighbors:
                 if not self.flagged[nr][nc] and not self.revealed[nr][nc]:
                     self.reveal(nr, nc)
+                    work_done = True
                     if self.game_over:
-                        return
+                        return 0
+        if work_done:
+            return 1
 
     # toggle a flag on a cell, ignoring revealed cells and game over state
     def toggle_flag(self, r, c):

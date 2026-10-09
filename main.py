@@ -14,7 +14,7 @@ import sys
 import pygame
 from board import Board
 from button import Button
-from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move, ai_brute_force_move
+from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -64,7 +64,19 @@ NUMBER_COLORS = {
 # game state names
 STATE_TITLE = "title"
 STATE_SETTINGS = "settings"
+STATE_AI_SETTINGS = "ai_settings"
+STATE_AI_DIFFICULTY = "ai_difficulty"
 STATE_GAME = "game"
+
+# ai mode settings
+STATE_AI_OFF = "ai_off"
+STATE_AI_INTERACTIVE = "ai_interactive"
+STATE_AI_AUTOMATIC = "ai_automatic"
+
+# ai difficulty settings
+STATE_AI_EASY = "ai_easy"
+STATE_AI_MEDIUM = "ai_medium"
+STATE_AI_HARD = "ai_hard"
 
 # ---------------------------------------------------------------------------
 # Game application
@@ -95,8 +107,11 @@ class Game:
 
         # initial game state
         self.state = STATE_TITLE
+        self.ai_setting = STATE_AI_OFF
+        self.ai_difficulty = STATE_AI_EASY
         self.mine_count = 15
         self.board = None
+        self.my_turn = True
 
         # store previous times
         self.prev_times = []
@@ -104,13 +119,14 @@ class Game:
         # clock variables
         self.start_ticks = 0
         self.elapsed_seconds = 0
+        self.turn_delay = 0
 
         # render buttons in initial game states
         self._build_title_buttons()
         self._build_settings_buttons()
+        self._build_ai_settings_buttons()
+        self._build_ai_difficulty_buttons()
         self._build_game_buttons()
-
-        self.solve_menu_open = False
 
     # -- button setup -------------------------------------------------------
     
@@ -134,22 +150,41 @@ class Game:
         self.start_button = Button((cx - 100, 400, 200, 55), "Start", self.font_large)
         self.back_button = Button((cx - 100, 470, 200, 45), "Back", self.font_medium)
 
+    # AI Settings Buttons
+    def _build_ai_settings_buttons(self):
+        #window horizontal center
+        cx = WINDOW_WIDTH // 2
+
+        # ai settings state buttons
+        self.normal_button = Button((cx - 100, 200, 200, 55), "Normal", self.font_large)
+        self.interactive_button = Button((cx - 100, 280, 200, 55), "Interactive", self.font_large)
+        self.automatic_button = Button((cx - 100, 360, 200, 55), "Automatic", self.font_large)
+        self.back_button_2 = Button((cx - 100, 440, 200, 45), "Back", self.font_medium)
+
+    # AI Difficulty Buttons
+    def _build_ai_difficulty_buttons(self):
+        #window horizontal center
+        cx = WINDOW_WIDTH // 2
+
+        # at difficulty state buttons
+        self.e_button = Button((cx - 100, 200, 200, 55), "Easy", self.font_large)
+        self.m_button = Button((cx - 100, 280, 200, 55), "Medium", self.font_large)
+        self.h_button = Button((cx - 100, 360, 200, 55), "Hard", self.font_large)
+        self.back_button_3 = Button((cx - 100, 440, 200, 45), "Back", self.font_medium)
+
     # Game Buttons
     def _build_game_buttons(self):
-        self.solve_button = Button((WINDOW_WIDTH - 220, 10, 65, 40), "Solve", self.font_medium)
         self.restart_button = Button((WINDOW_WIDTH - 145, 10, 65, 40), "Reset", self.font_medium)
         self.menu_button = Button((WINDOW_WIDTH - 70, 10, 65, 40), "Menu", self.font_medium)
 
-        self.easy_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 2, 65, 32), "Easy", self.font_small)
-        self.med_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 36, 65, 32), "Med", self.font_small)
-        self.hard_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 70, 65, 32), "Hard", self.font_small)
-        self.brute_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 104, 65, 32), "Brute", self.font_small)
+        sx = WINDOW_WIDTH - 220
 
     # -- state transitions --------------------------------------------------
     
     # initialise a new game board
     def start_new_game(self):
-        self.solve_menu_open = False
+        # reset state specific values
+        self.my_turn = True
         self.prev_times.clear()
         # builds board with mine_count # of mines
         self.board = Board(GRID_SIZE, self.mine_count)
@@ -157,6 +192,7 @@ class Game:
         # initialise trackers for timer
         self.start_ticks = pygame.time.get_ticks()
         self.elapsed_seconds = 0
+        self.turn_delay = (pygame.time.get_ticks() - self.start_ticks) // 100
 
         # set game state to STATE_GAME
         self.state = STATE_GAME
@@ -170,6 +206,10 @@ class Game:
             self.draw_title()
         elif self.state == STATE_SETTINGS:
             self.draw_settings()
+        elif self.state == STATE_AI_SETTINGS:
+            self.draw_ai_settings()
+        elif self.state == STATE_AI_DIFFICULTY:
+            self.draw_ai_difficulty()
         elif self.state == STATE_GAME:
             self.draw_game()
 
@@ -218,17 +258,45 @@ class Game:
         self.start_button.draw(self.screen)
         self.back_button.draw(self.screen)
 
+    # draws ai settings screen
+    def draw_ai_settings(self):
+        # render and draw 'Play with AI?' text
+        title = self.font_large.render("Play With AI?", True, COLOR_TEXT)
+        self.screen.blit(title, title.get_rect(center=(WINDOW_WIDTH // 2, 150)))
+
+        # draw pre-rendered buttons
+        # rendered in _build_ai_settings_buttons
+        self.normal_button.draw(self.screen)
+        self.interactive_button.draw(self.screen)
+        self.automatic_button.draw(self.screen)
+        self.back_button_2.draw(self.screen)
+
+    #draw ai difficulty screen
+    def draw_ai_difficulty(self):
+        # render and draw 'AI Difficulty' text
+        title = self.font_large.render("AI Difficulty", True, COLOR_TEXT)
+        self.screen.blit(title, title.get_rect(center=(WINDOW_WIDTH // 2, 150)))
+
+        # draw pre-rendered buttons
+        # rendered in _build_ai_difficulty_buttons
+        self.e_button.draw(self.screen)
+        self.m_button.draw(self.screen)
+        self.h_button.draw(self.screen)
+        self.back_button_3.draw(self.screen)
+
     # draws game screen
     def draw_game(self):
         # draw hud and board
         self.draw_hud()
         self.draw_board()
 
-        if self.solve_menu_open and not self.board.game_over:
-            self.easy_button.draw(self.screen)
-            self.med_button.draw(self.screen)
-            self.hard_button.draw(self.screen)
-            self.brute_button.draw(self.screen)
+        # draw screen overlay while waiting for AI's turn to end
+        if self.ai_setting == STATE_AI_INTERACTIVE and not self.my_turn and not self.board.game_over:
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 150))
+            self.screen.blit(overlay, (0, 0))
+            text = self.font_medium.render("AI is deciding a move...", True, COLOR_TEXT)
+            self.screen.blit(text, text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 40)))
 
         # draw overlay upon game over
         if self.board.game_over:
@@ -247,7 +315,6 @@ class Game:
 
         # draw pre-rendered buttons
         # rendered in _build_game_buttons
-        self.solve_button.draw(self.screen)
         self.restart_button.draw(self.screen)
         self.menu_button.draw(self.screen)
 
@@ -342,14 +409,20 @@ class Game:
         )
         self.screen.blit(hint, hint.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20)))
 
-        if self.board.won:
+        # get and display previous times (when not in AI mode)
+        if self.board.won and self.ai_setting == STATE_AI_OFF:
+            # get previous times
             if not self.prev_times:
                 self.get_prev_times()
+            # render and draw 'Best Times' label
             time_label = self.font_small.render("Best Times", True, COLOR_TITLE)
             self.screen.blit(time_label, time_label.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 40)))
+            # determine if score is a new record
+            # render and draw text if it is
             if len(self.prev_times) >= 2 and self.elapsed_seconds == self.prev_times[0] and self.elapsed_seconds != self.prev_times[1]:
                 record = self.font_large.render("New Record!", True, COLOR_TITLE)
                 self.screen.blit(record, record.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 70 + min(5, len(self.prev_times)) * 10)))
+            # render and draw 5 best times and labels
             for i in range(5):
                 if i >= len(self.prev_times): break
                 time_label = self.font_small.render(str(i + 1), True, COLOR_TEXT)
@@ -364,8 +437,21 @@ class Game:
             for event in pygame.event.get():
                 self.handle_event(event)
 
+            
             if self.state == STATE_GAME and self.board and not self.board.game_over:
+                # update time
                 self.elapsed_seconds = (pygame.time.get_ticks() - self.start_ticks) // 1000
+                cur_time = (pygame.time.get_ticks() - self.start_ticks) // 100
+                # handle ai move in interactive or automatic
+                if ((not self.my_turn) or self.ai_setting == STATE_AI_AUTOMATIC) and cur_time - self.turn_delay >= 7:
+                    self.turn_delay = cur_time
+                    if self.ai_difficulty == STATE_AI_EASY:
+                        ai_easy_move(self.board)
+                    elif self.ai_difficulty == STATE_AI_MEDIUM:
+                        ai_medium_move(self.board)
+                    elif self.ai_difficulty == STATE_AI_HARD:
+                        ai_hard_move(self.board)
+                    self.my_turn = True
 
             self.draw()
             pygame.display.flip()
@@ -381,6 +467,10 @@ class Game:
                 self.handle_title_click(event.pos)
             elif self.state == STATE_SETTINGS:
                 self.handle_settings_click(event.pos)
+            elif self.state == STATE_AI_SETTINGS:
+                self.handle_ai_settings_click(event.pos)
+            elif self.state == STATE_AI_DIFFICULTY:
+                self.handle_ai_difficulty_click(event.pos)
             elif self.state == STATE_GAME:
                 self.handle_game_click(event.pos, event.button)
         # handles user key input. Pressing the escape key leads to the main menu
@@ -412,30 +502,42 @@ class Game:
         elif self.plus_button.is_clicked(pos):
             self.mine_count = min(MAX_MINES, self.mine_count + 1)
         elif self.start_button.is_clicked(pos):
-            self.start_new_game()
+            self.state = STATE_AI_SETTINGS
         elif self.back_button.is_clicked(pos):
             self.state = STATE_TITLE
+
+    # while setting up a new game, user can choose to play with or without ai
+    def handle_ai_settings_click(self, pos):
+        if self.normal_button.is_clicked(pos):
+            self.ai_setting = STATE_AI_OFF
+            self.start_new_game()
+        elif self.interactive_button.is_clicked(pos):
+            self.ai_setting = STATE_AI_INTERACTIVE
+            self.state = STATE_AI_DIFFICULTY
+        elif self.automatic_button.is_clicked(pos):
+            self.ai_setting = STATE_AI_AUTOMATIC
+            self.state = STATE_AI_DIFFICULTY
+        elif self.back_button_2.is_clicked(pos):
+            self.state = STATE_SETTINGS
+
+    # while setting up an ai game, user can choose ai difficulty
+    def handle_ai_difficulty_click(self, pos):
+        if self.e_button.is_clicked(pos):
+            self.ai_difficulty = STATE_AI_EASY
+            self.start_new_game()
+        elif self.m_button.is_clicked(pos):
+            self.ai_difficulty = STATE_AI_MEDIUM
+            self.start_new_game()
+        elif self.h_button.is_clicked(pos):
+            self.ai_difficulty = STATE_AI_HARD
+            self.start_new_game()
+        elif self.back_button_3.is_clicked(pos):
+            self.state = STATE_AI_SETTINGS
 
     # handles user input while the minesweeper board is active
     def handle_game_click(self, pos, button):
         x, y = pos
 
-        if self.solve_menu_open:
-            self.solve_menu_open = False
-            if self.easy_button.is_clicked(pos):
-                ai_easy_move(self.board)
-            elif self.med_button.is_clicked(pos):
-                ai_medium_move(self.board)
-            elif self.hard_button.is_clicked(pos):
-                ai_hard_move(self.board)
-            elif self.brute_button.is_clicked(pos):
-                ai_brute_force_move(self.board)
-            return
-
-        if self.solve_button.is_clicked(pos):
-            if not self.board.game_over:
-                self.solve_menu_open = True
-            return
         if self.restart_button.is_clicked(pos):
             self.start_new_game()
             return
@@ -450,16 +552,27 @@ class Game:
         if not (0 <= row < GRID_SIZE and 0 <= col < GRID_SIZE):
             return
 
-        if self.board.game_over:
+        if self.board.game_over or not self.my_turn or self.ai_setting == STATE_AI_AUTOMATIC:
             return
 
         if button == 1:  # left click, reveal a tile
             if self.board.revealed[row][col]:
-                self.board.chord(row, col)
+                if self.board.chord(row, col) == 1:
+                    if self.ai_setting == STATE_AI_INTERACTIVE:
+                        self.my_turn = False
+                    self.turn_delay = (pygame.time.get_ticks() - self.start_ticks) // 100
             else:
                 self.board.reveal(row, col)
+                if self.ai_setting == STATE_AI_INTERACTIVE:
+                    self.my_turn = False
+                self.turn_delay = (pygame.time.get_ticks() - self.start_ticks) // 100
+
         elif button == 3:  # right click, flag a tile
-            self.board.toggle_flag(row, col)
+            if not self.board.revealed[row][col]:
+                self.board.toggle_flag(row, col)
+                if self.ai_setting == STATE_AI_INTERACTIVE:
+                    self.my_turn = False
+                self.turn_delay = (pygame.time.get_ticks() - self.start_ticks) // 100
 
     #Zach M added functions for time/record keeping and outputting
     #reformats seconds as int to time as string
