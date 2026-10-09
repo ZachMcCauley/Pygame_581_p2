@@ -14,7 +14,7 @@ import sys
 import pygame
 from board import Board
 from button import Button
-from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move
+from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move, ai_brute_force_move
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -144,6 +144,7 @@ class Game:
         self.easy_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 2, 65, 32), "Easy", self.font_small)
         self.med_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 36, 65, 32), "Med", self.font_small)
         self.hard_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 70, 65, 32), "Hard", self.font_small)
+        self.brute_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 104, 65, 32), "Brute", self.font_small)
 
     # -- state transitions --------------------------------------------------
     
@@ -228,6 +229,7 @@ class Game:
             self.easy_button.draw(self.screen)
             self.med_button.draw(self.screen)
             self.hard_button.draw(self.screen)
+            self.brute_button.draw(self.screen)
 
         # draw overlay upon game over
         if self.board.game_over:
@@ -427,6 +429,8 @@ class Game:
                 ai_medium_move(self.board)
             elif self.hard_button.is_clicked(pos):
                 ai_hard_move(self.board)
+            elif self.brute_button.is_clicked(pos):
+                ai_brute_force_move(self.board)
             return
 
         if self.solve_button.is_clicked(pos):
