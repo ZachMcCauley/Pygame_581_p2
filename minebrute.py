@@ -43,7 +43,8 @@ class Minebrute:
             raise ValueError("maxCombinations cannot be negative!")
         # Case : Tile at position is not revealed
         # Also case : tile is a "revealed 0"
-        if not self.board.revealed[position[0]][position[1]] or self.board.counts[position[0]][position[1]] == 0:
+        # Also case : game is over
+        if not self.board.revealed[position[0]][position[1]] or self.board.counts[position[0]][position[1]] == 0 or self.board.game_over:
             # In this case, we conclude nothing.
             return set(), set()
         # Get a list of positions for mines to check in a 3x3 area
