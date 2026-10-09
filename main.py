@@ -14,7 +14,7 @@ import sys
 import pygame
 from board import Board
 from button import Button
-from ai_solver import ai_hard_move
+from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -110,6 +110,8 @@ class Game:
         self._build_settings_buttons()
         self._build_game_buttons()
 
+        self.solve_menu_open = False
+
     # -- button setup -------------------------------------------------------
     
     # Title Buttons
@@ -138,10 +140,16 @@ class Game:
         self.restart_button = Button((WINDOW_WIDTH - 145, 10, 65, 40), "Reset", self.font_medium)
         self.menu_button = Button((WINDOW_WIDTH - 70, 10, 65, 40), "Menu", self.font_medium)
 
+        sx = WINDOW_WIDTH - 220
+        self.easy_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 2, 65, 32), "Easy", self.font_small)
+        self.med_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 36, 65, 32), "Med", self.font_small)
+        self.hard_button = Button(((WINDOW_WIDTH - 220), HUD_HEIGHT + 70, 65, 32), "Hard", self.font_small)
+
     # -- state transitions --------------------------------------------------
     
     # initialise a new game board
     def start_new_game(self):
+        self.solve_menu_open = False
         self.prev_times.clear()
         # builds board with mine_count # of mines
         self.board = Board(GRID_SIZE, self.mine_count)
@@ -215,6 +223,11 @@ class Game:
         # draw hud and board
         self.draw_hud()
         self.draw_board()
+
+        if self.solve_menu_open and not self.board.game_over:
+            self.easy_button.draw(self.screen)
+            self.med_button.draw(self.screen)
+            self.hard_button.draw(self.screen)
 
         # draw overlay upon game over
         if self.board.game_over:
@@ -405,8 +418,21 @@ class Game:
     # handles user input while the minesweeper board is active
     def handle_game_click(self, pos, button):
         x, y = pos
+
+        if self.solve_menu_open:
+            self.solve_menu_open = False
+            if self.easy_button.is_clicked(pos):
+                ai_easy_move(self.board)
+            elif self.med_button.is_clicked(pos):
+                ai_medium_move(self.board)
+            elif self.hard_button.is_clicked(pos):
+                ai_hard_move(self.board)
+            return
+
         if self.solve_button.is_clicked(pos):
-            ai_hard_move(self.board)
+            if not self.board.game_over:
+                self.solve_menu_open = True
+            return
         if self.restart_button.is_clicked(pos):
             self.start_new_game()
             return
