@@ -14,7 +14,7 @@ import sys
 import pygame
 from board import Board
 from button import Button
-from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move
+from ai_solver import ai_easy_move, ai_medium_move, ai_hard_move, ai_brute_force_move
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -77,6 +77,7 @@ STATE_AI_AUTOMATIC = "ai_automatic"
 STATE_AI_EASY = "ai_easy"
 STATE_AI_MEDIUM = "ai_medium"
 STATE_AI_HARD = "ai_hard"
+STATE_AI_BRUTE = "ai_brute_force"
 
 # ---------------------------------------------------------------------------
 # Game application
@@ -167,9 +168,10 @@ class Game:
         cx = WINDOW_WIDTH // 2
 
         # at difficulty state buttons
-        self.e_button = Button((cx - 100, 200, 200, 55), "Easy", self.font_large)
-        self.m_button = Button((cx - 100, 280, 200, 55), "Medium", self.font_large)
-        self.h_button = Button((cx - 100, 360, 200, 55), "Hard", self.font_large)
+        self.e_button = Button((cx - 100, 120, 200, 55), "Easy", self.font_large)
+        self.m_button = Button((cx - 100, 200, 200, 55), "Medium", self.font_large)
+        self.h_button = Button((cx - 100, 280, 200, 55), "Hard", self.font_large)
+        self.brute_button = Button((cx - 100, 360, 200, 55), "Brute-Force", self.font_large)
         self.back_button_3 = Button((cx - 100, 440, 200, 45), "Back", self.font_medium)
 
     # Game Buttons
@@ -275,13 +277,14 @@ class Game:
     def draw_ai_difficulty(self):
         # render and draw 'AI Difficulty' text
         title = self.font_large.render("AI Difficulty", True, COLOR_TEXT)
-        self.screen.blit(title, title.get_rect(center=(WINDOW_WIDTH // 2, 150)))
+        self.screen.blit(title, title.get_rect(center=(WINDOW_WIDTH // 2, 80)))
 
         # draw pre-rendered buttons
         # rendered in _build_ai_difficulty_buttons
         self.e_button.draw(self.screen)
         self.m_button.draw(self.screen)
         self.h_button.draw(self.screen)
+        self.brute_button.draw(self.screen)
         self.back_button_3.draw(self.screen)
 
     # draws game screen
@@ -451,6 +454,8 @@ class Game:
                         ai_medium_move(self.board)
                     elif self.ai_difficulty == STATE_AI_HARD:
                         ai_hard_move(self.board)
+                    elif self.ai_difficulty == STATE_AI_BRUTE:
+                        ai_brute_force_move(self.board)
                     self.my_turn = True
 
             self.draw()
@@ -530,6 +535,9 @@ class Game:
             self.start_new_game()
         elif self.h_button.is_clicked(pos):
             self.ai_difficulty = STATE_AI_HARD
+            self.start_new_game()
+        elif self.brute_button.is_clicked(pos):
+            self.ai_difficulty = STATE_AI_BRUTE
             self.start_new_game()
         elif self.back_button_3.is_clicked(pos):
             self.state = STATE_AI_SETTINGS

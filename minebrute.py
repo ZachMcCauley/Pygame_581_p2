@@ -106,6 +106,8 @@ class Minebrute:
         if len(self._knownMineLocationCache.difference(minePositions)) > 0:
             raise RuntimeError("A mine that would be found by the medium AI was not found by the hard AI!") 
         """
+        # Add information as to where mines are known to be
+        self._knownMineLocationCache = self._knownMineLocationCache.union(minePositions)
         # Return the values
         return safePositions, minePositions
 

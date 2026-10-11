@@ -32,6 +32,9 @@ class Board:
         self.won = False
         self.revealed_count = 0
 
+        # Used for minebrute so we can reuse information found about known mine positions
+        self.brute = None
+
     # calculate neighbors for a given cell
     def _neighbors(self, r, c):
         for dr in (-1, 0, 1):

@@ -198,16 +198,15 @@ def ai_hard_move(board):
 # If no new information is present on the board, a random tile is clicked.
 
 def ai_brute_force_move(board):
-    algo = Minebrute(board)
+    if board.brute is None:
+        board.brute = Minebrute(board)
     confirmedSafe = set()
     confirmedMines = set()
     for r in range(board.size):
         for c in range(board.size):
-            safe, mines = algo.minebrute((r, c), maxCombinations=100)
+            safe, mines = board.brute.minebrute((r, c), maxCombinations=100)
             confirmedMines = confirmedMines.union(mines)
             confirmedSafe = confirmedSafe.union(safe)
-    # Temporary pass so I can have a breakpoint here:
-    pass
     # Mark all flagged locations with flags
     for mine in confirmedMines:
         board.flagged[mine[0]][mine[1]] = True
