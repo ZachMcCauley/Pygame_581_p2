@@ -2,13 +2,13 @@
 
 ## Group 15
 
-**Project Manager:**
+**Project Manager:** Adira Mongar
 
-**Minesweeper Solver Development:** Ryan Graham
+**Minesweeper Solver Development:** Ryan Graham, Emilia Davis, Jett Viduya
 
-**Leaderboard Development:**
+**Leaderboard Development:** Zachary McCauley
 
-**Testing:**
+**Testing:** Adira Mongar, Eliza Malyshev, Daniel Harris
 
 ## Overview
 
